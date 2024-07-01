@@ -61,4 +61,4 @@ sequelize
     console.error("Unable to create table : ", error);
   });
 
-module.exports = sequelize;
+export default sequelize;
