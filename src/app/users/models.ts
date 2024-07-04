@@ -12,6 +12,12 @@ export const User = sequelize.define(
       autoIncrement: true,
       allowNull: false,
     },
+    uuid: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      unique: true,
+      defaultValue: DataTypes.UUIDV4,
+    },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -27,7 +33,7 @@ export const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        isAlpha: true,
+        is: RegExp(/^[a-zA-Z]{4,}(?: [a-zA-Z]+){0,2}$/),
       },
       set(val: string) {
         this.setDataValue("full_name", titleCase(val));
@@ -36,12 +42,19 @@ export const User = sequelize.define(
     password: {
       type: DataTypes.TEXT,
       allowNull: false,
-      set(val: string) {
-        this.setDataValue("password", bcrypt.hash(val, 12));
-      },
     },
   },
   {
     paranoid: true,
   }
 );
+
+User.addHook("beforeCreate", async (user, options) => {
+  user.dataValues.password = await bcrypt.hash(user.dataValues.password, 12);
+});
+
+User.addHook("beforeUpdate", async (user, options) => {
+  if (user.dataValues.password) {
+    user.dataValues.password = await bcrypt.hash(user.dataValues.password, 12);
+  }
+});

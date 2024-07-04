@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { NextFunction, Response, Request } from "express";
 import { getReasonPhrase } from "http-status-codes";
 import AppError from "./appError";
 
@@ -10,21 +10,14 @@ const sendErrorDev = (err: AppError | Error | any, res: Response) =>
   });
 
 const sendErrorProd = (err: AppError | Error | any, res: Response) => {
-  let message = err.message;
-  if (err.code === 11000) {
-    if (err.keyPattern) {
-      const keys = Object.keys(err.keyPattern);
-      message = `This ${keys[0]} is already exists`;
-    }
-  }
   res.status(err.statusCode).json({
     statusCode: err.statusCode,
     status: err.status,
-    message: message,
+    message: err.message,
   });
 };
 
-export default (err: AppError | Error | any, res: Response) => {
+export default (err: any, req: Request, res: Response, next: NextFunction) => {
   if (!err.statusCode) {
     err.statusCode = 500;
   }

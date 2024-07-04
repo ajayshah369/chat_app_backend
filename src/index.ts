@@ -3,7 +3,11 @@ dotenv.config();
 
 import app from "./app";
 
-const port: string | number = process.env.PORT || 8000;
+const port: string | number | null = process.env.PORT ?? null;
+
+if (!port) {
+  throw new Error("Port not defined in env variables!");
+}
 
 app.listen(port, () => {
   console.log(`Environment: ${process.env.NODE_ENV}`);

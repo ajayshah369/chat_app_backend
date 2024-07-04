@@ -1,4 +1,4 @@
-import { Sequelize, Error } from "sequelize";
+import { Sequelize, Error as SequelizeError } from "sequelize";
 
 type Config = {
   host: string;
@@ -8,12 +8,22 @@ type Config = {
   password: string;
 };
 
+let host = process.env.PG_Host;
+let port = process.env.PG_Port;
+let database = process.env.PG_Database;
+let username = process.env.PG_Username;
+let password = process.env.PG_Password;
+
+if (!host || !port || !database || !username || !password) {
+  throw new Error("Invalid database config!");
+}
+
 const config: Config = {
-  host: process.env.PG_Host!,
-  port: process.env.PG_Port!,
-  database: process.env.PG_Database!,
-  username: process.env.PG_Username!,
-  password: process.env.PG_Password!,
+  host,
+  port,
+  database,
+  username,
+  password,
 };
 
 const sequelize = new Sequelize(
@@ -47,18 +57,22 @@ sequelize
     console.log(
       `Connection has been established successfully to,\nDatabase Name: ${config.database}\nUser Name: ${config.username}`
     ); // eslint-disable-line no-console
+
+    synchronizeSequelize();
   })
-  .catch((err: Error) => {
+  .catch((err: SequelizeError) => {
     console.error(`Unable to connect to the database ${config.database}:`, err); // eslint-disable-line no-console
   });
 
-sequelize
-  .sync()
-  .then(() => {
-    console.log("Table synchronized successfully!");
-  })
-  .catch((error) => {
-    console.error("Unable to create table : ", error);
-  });
+const synchronizeSequelize = () => {
+  sequelize
+    .sync()
+    .then(() => {
+      console.log("Table synchronized successfully!");
+    })
+    .catch((error) => {
+      console.error("Unable to create table : ", error);
+    });
+};
 
 export default sequelize;
