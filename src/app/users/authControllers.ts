@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import catchAsync from "../utilities/catchAsync";
 
-import { signupService, loginService } from "./authServices";
+import { signupService, loginService, isLoggedInService } from "./authServices";
+import { Cookie_Name } from "./schemas";
+import AppError from "../utilities/appError";
 
 export const signup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -24,5 +26,21 @@ export const login = catchAsync(
       message: "Successfully logged in!",
       data,
     });
+  }
+);
+
+export const isLoggedIn = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const cookie = req.signedCookies[Cookie_Name];
+
+    if (!cookie) {
+      return next(new AppError("You re not logged in!", 400));
+    }
+
+    const data = await isLoggedInService(cookie);
+
+    req.user = data;
+
+    next();
   }
 );

@@ -8,3 +8,5 @@ export type LoginSchema = {
   email: string;
   password: string;
 };
+
+export const Cookie_Name: string = "chat.eziostech.com-auth";

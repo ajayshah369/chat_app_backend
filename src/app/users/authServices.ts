@@ -4,7 +4,7 @@ import { Response } from "express";
 import ms from "ms";
 import AppError from "../utilities/appError";
 import { User } from "./models";
-import { SignupSchema, LoginSchema } from "./schemas";
+import { SignupSchema, LoginSchema, Cookie_Name } from "./schemas";
 
 const JWT_Secret: Secret | undefined = process.env.JWT_Secret;
 const Session_Expires: string = process.env.Session_Expires ?? "1d";
@@ -26,7 +26,7 @@ const generateJWT = (payload: JWT_payload): string => {
 };
 
 const sendAuthCookie = (jwt: string, res: Response) => {
-  res.cookie("chat.eziostech.com-auth", jwt, {
+  res.cookie(Cookie_Name, jwt, {
     expires: new Date(Date.now() + ms(Session_Expires)),
     httpOnly: true,
     secure: true,
@@ -34,10 +34,31 @@ const sendAuthCookie = (jwt: string, res: Response) => {
   });
 };
 
+const decodeJWT = (jwt: string): string => {
+  const decoded = jsonwebtoken.verify(jwt, JWT_Secret, {
+    complete: true,
+  });
+
+  if (!decoded) {
+    throw new AppError("You are logged in!", 400);
+  }
+
+  if (typeof decoded.payload === "string") {
+    throw new AppError("You are logged in!", 400);
+  }
+
+  if (decoded.payload.exp! > decoded.payload.iat! + ms(Session_Expires)) {
+    throw new AppError("You are logged in!", 400);
+  }
+
+  return decoded.payload.uuid;
+};
+
 export const signupService = async (payload: SignupSchema, res: Response) => {
   const user = await User.create(payload);
 
   const jsonUser = user.toJSON();
+  delete jsonUser.id;
   delete jsonUser.password;
 
   sendAuthCookie(generateJWT({ uuid: jsonUser.uuid }), res);
@@ -61,9 +82,34 @@ export const loginService = async (payload: LoginSchema, res: Response) => {
   }
 
   const jsonUser = user.toJSON();
+  delete jsonUser.id;
   delete jsonUser.password;
 
   sendAuthCookie(generateJWT({ uuid: jsonUser.uuid }), res);
+
+  return jsonUser;
+};
+
+export const isLoggedInService = async (cookie: string) => {
+  const uuid = decodeJWT(cookie);
+
+  if (!uuid) {
+    throw new AppError("You are logged in!", 400);
+  }
+
+  const user = await User.findOne({
+    where: {
+      uuid,
+    },
+  });
+
+  if (!user) {
+    throw new AppError("You are not logged in!", 400);
+  }
+
+  const jsonUser = user.toJSON();
+  delete jsonUser.id;
+  delete jsonUser.password;
 
   return jsonUser;
 };
