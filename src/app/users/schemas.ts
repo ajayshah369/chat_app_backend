@@ -1,5 +1,10 @@
 export type SignupSchema = {
-  email: String;
-  full_name: String;
-  password: String;
+  email: string;
+  full_name: string;
+  password: string;
+};
+
+export type LoginSchema = {
+  email: string;
+  password: string;
 };
