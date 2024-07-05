@@ -44,3 +44,14 @@ export const isLoggedIn = catchAsync(
     next();
   }
 );
+
+export const logout = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    res.clearCookie(Cookie_Name);
+
+    res.status(200).json({
+      status: "success",
+      message: "Successfully logged out!",
+    });
+  }
+);
