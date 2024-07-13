@@ -34,7 +34,7 @@ export const isLoggedIn = catchAsync(
     const cookie = req.signedCookies[Cookie_Name];
 
     if (!cookie) {
-      return next(new AppError("You re not logged in!", 400));
+      return next(new AppError("You are not logged in!", 400));
     }
 
     const data = await isLoggedInService(cookie);

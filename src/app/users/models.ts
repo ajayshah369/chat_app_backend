@@ -29,14 +29,14 @@ export const User = sequelize.define(
         this.setDataValue("email", val.toLowerCase());
       },
     },
-    full_name: {
+    name: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
         is: RegExp(/^[a-zA-Z]{4,}(?: [a-zA-Z]+){0,2}$/),
       },
       set(val: string) {
-        this.setDataValue("full_name", titleCase(val));
+        this.setDataValue("name", titleCase(val));
       },
     },
     password: {
