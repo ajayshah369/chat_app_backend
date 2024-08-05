@@ -1,12 +1,12 @@
-import { getReasonPhrase } from "http-status-codes";
+import { getReasonPhrase, StatusCodes } from "http-status-codes";
 
 class AppError extends Error {
-  statusCode: number;
+  statusCode: StatusCodes;
   status: string;
   isOperational: boolean;
   errorMessage: string;
 
-  constructor(message: string, statusCode: number) {
+  constructor(message: string, statusCode: StatusCodes) {
     super(message);
 
     this.statusCode = statusCode;

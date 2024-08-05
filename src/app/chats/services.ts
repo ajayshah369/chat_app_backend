@@ -1,4 +1,6 @@
 import sequelize from "../../sequelize";
+import AppError from "../utilities/appError";
+import { StatusCodes } from "http-status-codes";
 import * as chatAssociations from "./association";
 
 const { User, Chat, ChatParticipant } = chatAssociations.default;
@@ -47,4 +49,18 @@ export const createUniqueChatBetweenTwoUsers = async (
     await transaction.rollback();
     throw error;
   }
+};
+
+export const searchNewChatService = async (email: string) => {
+  const user = await User.findOne({
+    where: {
+      email,
+    },
+  });
+
+  if (!user) {
+    throw new AppError("User not found!", StatusCodes.BAD_REQUEST);
+  }
+
+  return user;
 };

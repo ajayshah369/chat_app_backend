@@ -40,12 +40,16 @@ const sequelize = new Sequelize(
       acquire: parseInt(process.env.Sequelize_Pool_Acquire ?? "30000", 10),
       idle: 10000,
     },
-    logging(sql, timing) {
+    logging: (sql, timing) => {
       if (
         timing &&
         timing > parseInt(process.env.Sequelize_Query_TimeLimit ?? "1000", 10)
       ) {
         console.log(`Slow query (execution time ${timing} ms): ${sql}`);
+      } else {
+        if (process.env.NODE_ENV !== "production") {
+          console.log(`RAW Query:\n${sql}`);
+        }
       }
     },
   }

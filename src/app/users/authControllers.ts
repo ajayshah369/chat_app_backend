@@ -1,16 +1,18 @@
 import { Request, Response, NextFunction } from "express";
-import catchAsync from "../utilities/catchAsync";
+import { StatusCodes } from "http-status-codes";
 
+import catchAsync from "../utilities/catchAsync";
 import { signupService, loginService, isLoggedInService } from "./authServices";
 import { Cookie_Name } from "./schemas";
 import AppError from "../utilities/appError";
+import appResponse from "../utilities/appResponse";
 
 export const signup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const data = await signupService(req.body, res);
 
-    res.status(201).json({
-      status: "success",
+    return appResponse(res, {
+      statusCode: StatusCodes.CREATED,
       message: "Successfully signed up!",
       data,
     });
@@ -21,8 +23,8 @@ export const login = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const data = await loginService(req.body, res);
 
-    res.status(200).json({
-      status: "success",
+    return appResponse(res, {
+      statusCode: StatusCodes.OK,
       message: "Successfully logged in!",
       data,
     });
@@ -34,7 +36,9 @@ export const isLoggedIn = catchAsync(
     const cookie = req.signedCookies[Cookie_Name];
 
     if (!cookie) {
-      return next(new AppError("You are not logged in!", 400));
+      return next(
+        new AppError("You are not logged in!", StatusCodes.BAD_REQUEST)
+      );
     }
 
     const data = await isLoggedInService(cookie);
@@ -49,8 +53,8 @@ export const logout = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     res.clearCookie(Cookie_Name);
 
-    res.status(200).json({
-      status: "success",
+    return appResponse(res, {
+      statusCode: StatusCodes.OK,
       message: "Successfully logged out!",
     });
   }

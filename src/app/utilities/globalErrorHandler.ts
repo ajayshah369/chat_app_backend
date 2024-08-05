@@ -1,33 +1,22 @@
-import { NextFunction, Response, Request } from "express";
-import { getReasonPhrase } from "http-status-codes";
+import { Response, Request } from "express";
+import { getReasonPhrase, StatusCodes } from "http-status-codes";
 import AppError from "./appError";
+import appResponse, { AppResponseType } from "./appResponse";
 
-const sendErrorDev = (err: AppError | Error | any, res: Response) =>
-  res.status(err.statusCode).json({
-    ...err,
-    message: err.message,
-    stack: err.stack,
-  });
+export default (err: AppError | Error | any, req: Request, res: Response) => {
+  const responseData: AppResponseType = {
+    statusCode: err.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR,
+    message:
+      err.errorMessage ??
+      err.message ??
+      getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR),
+  };
 
-const sendErrorProd = (err: AppError | Error | any, res: Response) => {
-  res.status(err.statusCode).json({
-    statusCode: err.statusCode,
-    status: err.status,
-    message: err.message,
-  });
-};
-
-export default (err: any, req: Request, res: Response, next: NextFunction) => {
-  if (!err.statusCode) {
-    err.statusCode = 500;
-  }
-  if (!err.status) {
-    err.status = getReasonPhrase(err.statusCode);
+  if (process.env.NODE_ENV !== "production") {
+    responseData.error = {
+      ...err,
+    };
   }
 
-  if (process.env.NODE_ENV === "development") {
-    sendErrorDev(err, res);
-  } else {
-    sendErrorProd(err, res);
-  }
+  return appResponse(res, responseData);
 };

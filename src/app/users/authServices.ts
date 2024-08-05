@@ -2,6 +2,7 @@ import jsonwebtoken, { Secret } from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { Response } from "express";
 import ms from "ms";
+import { StatusCodes } from "http-status-codes";
 import AppError from "../utilities/appError";
 import { User } from "./models";
 import { SignupSchema, LoginSchema, Cookie_Name } from "./schemas";
@@ -40,15 +41,15 @@ const decodeJWT = (jwt: string): string => {
   });
 
   if (!decoded) {
-    throw new AppError("You are logged in!", 400);
+    throw new AppError("You are logged in!", StatusCodes.BAD_REQUEST);
   }
 
   if (typeof decoded.payload === "string") {
-    throw new AppError("You are logged in!", 400);
+    throw new AppError("You are logged in!", StatusCodes.BAD_REQUEST);
   }
 
   if (decoded.payload.exp! > decoded.payload.iat! + ms(Session_Expires)) {
-    throw new AppError("You are logged in!", 400);
+    throw new AppError("You are logged in!", StatusCodes.BAD_REQUEST);
   }
 
   return decoded.payload.uuid;
@@ -74,11 +75,11 @@ export const loginService = async (payload: LoginSchema, res: Response) => {
   });
 
   if (!user) {
-    throw new AppError("Invalid email or password!", 400);
+    throw new AppError("Invalid email or password!", StatusCodes.BAD_REQUEST);
   }
 
   if (!(await bcrypt.compare(payload.password, user.dataValues.password))) {
-    throw new AppError("Invalid email or password!", 400);
+    throw new AppError("Invalid email or password!", StatusCodes.BAD_REQUEST);
   }
 
   const jsonUser = user.toJSON();
@@ -94,7 +95,7 @@ export const isLoggedInService = async (cookie: string) => {
   const uuid = decodeJWT(cookie);
 
   if (!uuid) {
-    throw new AppError("You are logged in!", 400);
+    throw new AppError("You are logged in!", StatusCodes.BAD_REQUEST);
   }
 
   const user = await User.findOne({
@@ -104,7 +105,7 @@ export const isLoggedInService = async (cookie: string) => {
   });
 
   if (!user) {
-    throw new AppError("You are not logged in!", 400);
+    throw new AppError("You are not logged in!", StatusCodes.BAD_REQUEST);
   }
 
   const jsonUser = user.toJSON();
