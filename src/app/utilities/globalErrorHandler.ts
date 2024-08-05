@@ -1,9 +1,14 @@
-import { Response, Request } from "express";
+import { Response, Request, NextFunction } from "express";
 import { getReasonPhrase, StatusCodes } from "http-status-codes";
 import AppError from "./appError";
 import appResponse, { AppResponseType } from "./appResponse";
 
-export default (err: AppError | Error | any, req: Request, res: Response) => {
+export default (
+  err: AppError | Error | any,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const responseData: AppResponseType = {
     statusCode: err.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR,
     message:

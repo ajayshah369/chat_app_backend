@@ -53,6 +53,7 @@ export const createUniqueChatBetweenTwoUsers = async (
 
 export const searchNewChatService = async (email: string) => {
   const user = await User.findOne({
+    attributes: { exclude: ["id", "password"] },
     where: {
       email,
     },

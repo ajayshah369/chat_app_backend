@@ -99,6 +99,7 @@ export const isLoggedInService = async (cookie: string) => {
   }
 
   const user = await User.findOne({
+    attributes: { exclude: ["id", "password"] },
     where: {
       uuid,
     },
@@ -109,8 +110,6 @@ export const isLoggedInService = async (cookie: string) => {
   }
 
   const jsonUser = user.toJSON();
-  delete jsonUser.id;
-  delete jsonUser.password;
 
   return jsonUser;
 };

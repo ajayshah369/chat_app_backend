@@ -48,7 +48,7 @@ const sequelize = new Sequelize(
         console.log(`Slow query (execution time ${timing} ms): ${sql}`);
       } else {
         if (process.env.NODE_ENV !== "production") {
-          console.log(`RAW Query:\n${sql}`);
+          // console.log(`RAW Query:\n${sql}`);
         }
       }
     },
