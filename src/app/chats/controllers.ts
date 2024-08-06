@@ -9,7 +9,7 @@ export const searchNewChat = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email } = req.params;
 
-    const data = await searchNewChatService(email);
+    const data = await searchNewChatService(email, req.user.uuid);
 
     return appResponse(res, {
       statusCode: StatusCodes.OK,

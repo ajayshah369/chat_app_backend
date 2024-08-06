@@ -57,6 +57,7 @@ const createUniqueChatBetweenTwoUsers = async (
       await sequelize.query(queryToGetUniqueChatBetweenTwoUsers, {
         replacements: { userId1, userId2 },
         type: QueryTypes.SELECT,
+        transaction,
       })
     )[0];
 
@@ -68,11 +69,14 @@ const createUniqueChatBetweenTwoUsers = async (
   }
 };
 
-export const searchNewChatService = async (email: string) => {
+export const searchNewChatService = async (email: string, uuid: string) => {
   const user = await User.findOne({
     attributes: { exclude: ["id", "password"] },
     where: {
       email,
+      uuid: {
+        [Op.ne]: uuid,
+      },
     },
   });
 
