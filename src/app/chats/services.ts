@@ -2,10 +2,26 @@ import sequelize from "../../sequelize";
 import AppError from "../utilities/appError";
 import { StatusCodes } from "http-status-codes";
 import * as chatAssociations from "./association";
+import { Op, QueryTypes } from "sequelize";
 
 const { User, Chat, ChatParticipant } = chatAssociations.default;
 
-export const createUniqueChatBetweenTwoUsers = async (
+const queryToGetUniqueChatBetweenTwoUsers = `
+  SELECT chats.uuid, chats.title, users."name", users.email
+  FROM chat_participants cp1
+  JOIN chat_participants cp2 ON cp1.chat_id = cp2.chat_id
+  JOIN chats ON chats.id = cp1.chat_id AND chats.id = cp2.chat_id
+  JOIN users ON users.id = cp2.user_id
+  WHERE cp1.user_id = :userId1 AND cp2.user_id = :userId2
+  AND chats.id IN (
+      SELECT chat_id
+      FROM chat_participants
+      GROUP BY chat_id
+      HAVING COUNT(user_id) = 2
+  ) AND chats."isGroupChat" = FALSE;
+`;
+
+const createUniqueChatBetweenTwoUsers = async (
   userId1: number,
   userId2: number
 ) => {
@@ -13,18 +29,12 @@ export const createUniqueChatBetweenTwoUsers = async (
 
   try {
     // Check if a chat between these two users already exists
-    const existingChat = await Chat.findOne({
-      include: [
-        {
-          model: User,
-          where: {
-            id: [userId1, userId2],
-          },
-        },
-      ],
-      group: ["chats.id"],
-      having: sequelize.literal("COUNT(users.id) = 2"),
-    });
+    const existingChat = (
+      await sequelize.query(queryToGetUniqueChatBetweenTwoUsers, {
+        replacements: { userId1, userId2 },
+        type: QueryTypes.SELECT,
+      })
+    )[0];
 
     if (existingChat) {
       await transaction.rollback();
@@ -32,16 +42,23 @@ export const createUniqueChatBetweenTwoUsers = async (
     }
 
     // Create a new chat
-    const chat = await Chat.create({}, { transaction });
+    const newChat = await Chat.create({}, { transaction });
 
     // Add participants
     await ChatParticipant.bulkCreate(
       [
-        { chatId: chat.dataValues.id, user_id: userId1 },
-        { chatId: chat.dataValues.id, user_id: userId2 },
+        { chat_id: newChat.dataValues.id, user_id: userId1 },
+        { chat_id: newChat.dataValues.id, user_id: userId2 },
       ],
       { transaction }
     );
+
+    const chat = (
+      await sequelize.query(queryToGetUniqueChatBetweenTwoUsers, {
+        replacements: { userId1, userId2 },
+        type: QueryTypes.SELECT,
+      })
+    )[0];
 
     await transaction.commit();
     return chat;
@@ -64,4 +81,22 @@ export const searchNewChatService = async (email: string) => {
   }
 
   return user;
+};
+
+export const getOrCreateChatService = async (userUuids: [string, string]) => {
+  const users = await User.findAll({
+    attributes: ["id", "uuid"],
+    where: {
+      uuid: {
+        [Op.in]: userUuids,
+      },
+    },
+  });
+
+  const userId1: number = users[0].dataValues.id;
+  const userId2: number = users[1].dataValues.id;
+
+  const data = await createUniqueChatBetweenTwoUsers(userId1, userId2);
+
+  return data;
 };

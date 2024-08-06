@@ -7,5 +7,6 @@ const router = Router();
 router.use(isLoggedIn);
 
 router.get("/searchNewChat/:email", controller.searchNewChat);
+router.get("/getOrCreateChat/:userUuid", controller.getOrCreateChat);
 
 export default router;
