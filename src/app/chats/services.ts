@@ -7,7 +7,7 @@ import { Op, QueryTypes } from "sequelize";
 const { User, Chat, ChatParticipant } = chatAssociations.default;
 
 const queryToGetUniqueChatBetweenTwoUsers = `
-  SELECT chats.uuid, chats.title, users."name", users.email
+  SELECT chats.uuid, chats.title, users."name", users.email, chats."isGroupChat", chats."updatedAt"
   FROM chat_participants cp1
   JOIN chat_participants cp2 ON cp1.chat_id = cp2.chat_id
   JOIN chats ON chats.id = cp1.chat_id AND chats.id = cp2.chat_id
